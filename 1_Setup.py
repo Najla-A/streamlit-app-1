@@ -1,7 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import json
-import hashlib
 import sys
 import pathlib
 
@@ -592,6 +591,17 @@ if d:
     with st.spinner("Running Aspen Plus + ML pipeline…"):
         result = pipeline.run(user_inputs)
     inference_ms = (time.time() - start_t) * 1000.0
+
+    # Diagnostic — confirm what landed in result["aspen"]. If the Sensitivity page
+    # later shows "no sensitivity tables," the terminal here is the ground truth.
+    _aspen_keys = sorted(result["aspen"].keys())
+    print(f"[SETUP] pipeline.run done in {inference_ms:.0f} ms. aspen keys: {_aspen_keys}")
+    _sens = result["aspen"].get("sensitivities") or {}
+    if _sens:
+        _populated = sum(1 for b in _sens.values() if isinstance(b, dict) and b.get("xs"))
+        print(f"[SETUP] sensitivities: {len(_sens)} blocks declared, {_populated} populated.")
+    else:
+        print("[SETUP] sensitivities: MISSING from aspen result — Sensitivity page will gate.")
 
     st.session_state["sim_result"] = result
     st.session_state["sim_inputs"] = user_inputs
