@@ -558,10 +558,11 @@ with st.form("_sim_form", clear_on_submit=True):
     _submitted = st.form_submit_button("Run")
 
 # ── Backend execution — only runs when the user explicitly clicks Simulate ────
-# Do NOT auto-run on page load (the old "or sim_result not in session_state"
-# condition caused a concurrent default run that disconnected the Aspen COM object)
+# Gate on _submitted so the pipeline only runs on the rerun triggered by the form's
+# Run button. Other reruns (e.g., navigation buttons elsewhere on the page) MUST
+# NOT re-invoke Aspen, even if the form widget value is still in session_state.
 d = None
-if payload_json and payload_json.strip().startswith("{"):
+if _submitted and payload_json and payload_json.strip().startswith("{"):
     d = None
     try:
         d = json.loads(payload_json)
